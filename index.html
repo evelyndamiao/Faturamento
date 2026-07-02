@@ -296,7 +296,7 @@ function render(){
   let list=cur==='todos'?pessoas:pessoas.filter(p=>p.t===cur);
   if(s)list=list.filter(p=>p.n.toLowerCase().includes(s));
   list=[...list].sort((a,b)=>b.fat-a.fat);
-  document.getElementById('count').textContent=`Exibindo ${list.length} pessoas${list.length!==1?'es':''}`;
+  document.getElementById('count').textContent=`Exibindo ${list.length} pessoas${list.length!==1?'pessoas':''}`;
   if(!list.length){tbody.innerHTML='<tr><td colspan="5" class="empty">Nenhum resultado.</td></tr>';return;}
   list.forEach(p=>{
     const f=getFaixa(p.m);const ci=faixaIdx[f];const bc=p.t==='Gerente'?'bg':'bv';
