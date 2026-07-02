@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Faturamento — Equipe Comercial · 300 Franchising</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F5F5F3; color: #1a1a1a; min-height: 100vh; }
+  .topbar { background: #0F0F0F; padding: 0 2rem; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar-brand { display: flex; align-items: center; gap: 10px; }
+  .topbar-logo { width: 28px; height: 28px; background: #E30000; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .topbar-logo span { color: #fff; font-weight: 700; font-size: 13px; }
+  .topbar-name { color: #fff; font-size: 13px; font-weight: 500; }
+  .topbar-right { color: #888; font-size: 12px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 1.75rem 1.5rem 3rem; }
+  .page-title { font-size: 20px; font-weight: 600; color: #0F0F0F; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: #6b6b6b; margin-bottom: 1.5rem; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #aaa; margin-bottom: 10px; }
+  .kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .kpi { background: #fff; border: 0.5px solid #e4e4e0; border-radius: 10px; padding: .9rem 1rem; }
+  .kpi-accent { border-top: 3px solid #E30000; }
+  .kpi-label { font-size: 11px; color: #888; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi-value { font-size: 22px; font-weight: 600; color: #0F0F0F; line-height: 1; }
+  .kpi-sub { font-size: 11px; color: #aaa; margin-top: 4px; }
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.25rem; }
+  .card { background: #fff; border: 0.5px solid #e4e4e0; border-radius: 12px; padding: 1.1rem 1.25rem; }
+  .card-label { font-size: 11px; color: #aaa; margin-bottom: 2px; }
+  .card-title { font-size: 14px; font-weight: 600; color: #0F0F0F; margin-bottom: 4px; }
+  .card-hint { font-size: 11px; color: #bbb; margin-bottom: 14px; }
+  .legend-block { margin-top: 14px; display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
+  .legend-block::-webkit-scrollbar { width: 4px; }
+  .legend-block::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+  .leg-item { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #555; }
+  .leg-sq { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+  .leg-detail { margin-left: auto; color: #aaa; font-size: 10px; white-space: nowrap; }
+  .cluster-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 1.25rem; }
+  .cluster-card { background: #fff; border: 0.5px solid #e4e4e0; border-radius: 12px; padding: 1rem 1.1rem; }
+  .cluster-name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+  .cluster-count { font-size: 11px; color: #aaa; margin-bottom: 8px; }
+  .cluster-avg-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: .04em; }
+  .cluster-avg-value { font-size: 18px; font-weight: 600; color: #E30000; line-height: 1.2; margin-bottom: 8px; }
+  .cluster-names { font-size: 11px; color: #6b6b6b; max-height: 160px; overflow-y: auto; }
+  .cluster-names::-webkit-scrollbar { width: 4px; }
+  .cluster-names::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+  .cluster-person { display: flex; justify-content: space-between; gap: 6px; padding: 3px 0; border-bottom: 0.5px solid #f5f5f3; }
+  .cluster-person:last-child { border-bottom: none; }
+  .cluster-person-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+  .cluster-person-val { color: #999; flex-shrink: 0; font-size: 10px; }
+  .cluster-note { font-size: 10px; color: #c9a; margin-top: 6px; }
+  .list-card { background: #fff; border: 0.5px solid #e4e4e0; border-radius: 12px; padding: 1.1rem 1.25rem; }
+  .list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .list-title { font-size: 14px; font-weight: 600; color: #0F0F0F; }
+  .filter-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .fbtn { font-size: 12px; padding: 5px 13px; border-radius: 99px; border: 1px solid #ddd; background: transparent; color: #6b6b6b; cursor: pointer; transition: all .15s; }
+  .fbtn:hover { background: #f5f5f3; }
+  .fbtn.active { background: #0F0F0F; color: #fff; border-color: #0F0F0F; }
+  .search-wrap { margin-bottom: 12px; }
+  .search-wrap input { width: 100%; padding: 7px 12px; border: 0.5px solid #ddd; border-radius: 8px; font-size: 13px; color: #0F0F0F; background: #fafafa; outline: none; }
+  .search-wrap input:focus { border-color: #E30000; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  th { text-align: left; color: #aaa; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding: 7px 14px; border-bottom: 0.5px solid #eee; }
+  td { padding: 8px 14px; color: #1a1a1a; border-bottom: 0.5px solid #f0f0f0; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+  .bv { background: #E6F1FB; color: #0C447C; }
+  .bg { background: #E1F5EE; color: #085041; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .fat-val { font-weight: 500; }
+  .fat-zero { color: #ccc; }
+  .count-info { font-size: 12px; color: #aaa; margin-bottom: 8px; }
+  .empty { text-align: center; padding: 2rem; color: #aaa; font-size: 13px; }
+  .footer { text-align: center; margin-top: 2rem; font-size: 11px; color: #ccc; }
+  @media (max-width: 640px) { .kpi-row, .charts-row, .cluster-grid { grid-template-columns: 1fr 1fr; } .topbar { padding: 0 1rem; } .wrap { padding: 1rem; } }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo"><span>300</span></div>
+    <span class="topbar-name">300 Franchising</span>
+  </div>
+  <div class="topbar-right">Gente &amp; Gestão · Uso interno</div>
+</div>
+<div class="wrap">
+  <div class="page-title">Faturamento — Equipe comercial</div>
+  <div class="page-sub">Ciclo jan–jun/2026 · 55 colaboradores ativos</div>
+
+  <div class="kpi-row">
+    <div class="kpi kpi-accent">
+      <div class="kpi-label">Fat. total semestre</div>
+      <div class="kpi-value">R$12,91M</div>
+      <div class="kpi-sub">jan–jun/2026</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Média mensal vendedores</div>
+      <div class="kpi-value">R$36,2K</div>
+      <div class="kpi-sub">R$8,69M ÷ 40 ÷ 6 meses</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Média mensal gerentes</div>
+      <div class="kpi-value">R$111,8K</div>
+      <div class="kpi-sub">R$10,06M ÷ 15 ÷ 6 meses</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Média mensal geral</div>
+      <div class="kpi-value">R$2,15M</div>
+      <div class="kpi-sub">R$12,91M ÷ 6 meses</div>
+    </div>
+  </div>
+
+  <div class="section-label">Distribuição de faturamento por faixa de tempo de casa · Total: R$12,91M (jan–jun/2026)</div>
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-label">Vendedores · 40 pessoas · R$8,69M no semestre</div>
+      <div class="card-title">Distribuição por faixa de tempo de casa</div>
+      <div class="card-hint">Faturamento acumulado jan–jun/2026 por faixa</div>
+      <div style="position:relative;width:100%;height:280px"><canvas id="cvF"></canvas></div>
+      <div class="legend-block" id="legVF"></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Gerentes de contas · 15 pessoas · R$10,06M no semestre</div>
+      <div class="card-title">Distribuição por faixa de tempo de casa</div>
+      <div class="card-hint">Faturamento acumulado jan–jun/2026 por faixa</div>
+      <div style="position:relative;width:100%;height:280px"><canvas id="cgF"></canvas></div>
+      <div class="legend-block" id="legGF"></div>
+    </div>
+  </div>
+
+  <div class="section-label">Média mensal por pessoa · Vendedores — fat. da faixa ÷ nº de pessoas ÷ 6 meses</div>
+  <div class="cluster-grid" id="clusterV"></div>
+
+  <div class="section-label">Média mensal por pessoa · Gerentes de contas — fat. da faixa ÷ nº de pessoas ÷ 6 meses</div>
+  <div class="cluster-grid" id="clusterG"></div>
+
+  <div class="section-label">Listagem individual</div>
+  <div class="list-card">
+    <div class="list-header">
+      <div class="list-title">Colaboradores — ordenado por faturamento</div>
+      <div class="filter-btns">
+        <button class="fbtn active" onclick="filter('todos',this)">Todos (55)</button>
+        <button class="fbtn" onclick="filter('Vendedor',this)">Vendedores (40)</button>
+        <button class="fbtn" onclick="filter('Gerente',this)">Gerentes (15)</button>
+      </div>
+    </div>
+    <div class="search-wrap"><input type="text" id="search" placeholder="Buscar por nome…" oninput="render()"></div>
+    <div class="count-info" id="count"></div>
+    <table>
+      <thead><tr>
+        <th style="width:36%">Nome</th>
+        <th style="width:13%">Cargo</th>
+        <th style="width:17%">Faixa</th>
+        <th style="width:17%">Fat. semestre</th>
+        <th style="width:17%">Média mensal*</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="footer">*Média mensal = faturamento individual ÷ 6 meses do ciclo.<br>Gerado em 01/07/2026 · 300 Franchising · Gente &amp; Gestão</div>
+</div>
+
+<script>
+const LABELS = ["0 a 3 meses","3 a 6 meses","6 a 12 meses","+12 meses"];
+const COLORS = ["#378ADD","#8DBF66","#EF9F27","#9B72E8"];
+const FAT_V = [735000, 1237000, 583000, 6138000];
+const FAT_G = [39000, 689000, 423000, 8909000];
+
+function fmtK(v){
+  if(!v)return'R$0';
+  if(v>=1000000)return'R$'+(v/1000000).toFixed(2).replace('.',',')+' M';
+  return'R$'+Math.round(v/1000)+'K';
+}
+function getFaixa(m){if(m<=3)return"0 a 3 meses";if(m<=6)return"3 a 6 meses";if(m<=12)return"6 a 12 meses";return"+12 meses";}
+const faixaIdx={"0 a 3 meses":0,"3 a 6 meses":1,"6 a 12 meses":2,"+12 meses":3};
+
+function makePie(id, fat, legId) {
+  const total=fat.reduce((a,b)=>a+b,0);
+  new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{labels:LABELS,datasets:[{data:fat,backgroundColor:COLORS,borderColor:'#fff',borderWidth:3,hoverOffset:5}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:16},cutout:'45%',
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:c=>` ${fmtK(c.parsed)} (${((c.parsed/total)*100).toFixed(1)}%)`}},
+        datalabels:{color:'#fff',font:{size:12,weight:'700'},clamp:true,formatter:(v)=>{const p=(v/total)*100;return p<5?'':p.toFixed(0)+'%';}}
+      }
+    },plugins:[ChartDataLabels]
+  });
+  const el=document.getElementById(legId);
+  LABELS.forEach((l,i)=>{
+    const p=((fat[i]/total)*100).toFixed(1);
+    el.innerHTML+=`<div class="leg-item"><span class="leg-sq" style="background:${COLORS[i]}"></span><span>${l}</span><span class="leg-detail">${fmtK(fat[i])} · ${p}%</span></div>`;
+  });
+}
+
+makePie('cvF',FAT_V,'legVF');
+makePie('cgF',FAT_G,'legGF');
+
+const pessoas = [
+  {n:"Alisson Cezar Silva Barroso",t:"Vendedor",m:22,fat:143000,mj:23833},
+  {n:"Ana Carolina Padilha de Souza",t:"Vendedor",m:0,fat:0,mj:0},
+  {n:"Ana Paula Nunes Martinez da Silva",t:"Vendedor",m:47,fat:411000,mj:68500},
+  {n:"André Custódio da Silva",t:"Gerente",m:3,fat:39000,mj:6500},
+  {n:"Andrew Willian Almeida do Rosário",t:"Vendedor",m:3,fat:482000,mj:80333},
+  {n:"Beatris Heidemann",t:"Gerente",m:76,fat:283000,mj:47167},
+  {n:"Beatriz Correa dos Santos Fedrigo Gonçalves",t:"Gerente",m:65,fat:1310000,mj:218333},
+  {n:"Beatriz de Oliveira Marmachuk",t:"Vendedor",m:1,fat:70000,mj:11667},
+  {n:"Bruna Gomes de Oliveira",t:"Gerente",m:40,fat:145000,mj:24167},
+  {n:"Carlos Daniel Menezes Mar",t:"Vendedor",m:14,fat:224000,mj:37333},
+  {n:"Carlos Eduardo Dias da Costa",t:"Vendedor",m:34,fat:86000,mj:14333},
+  {n:"Cleusa de Fátima Kuhn",t:"Vendedor",m:22,fat:565000,mj:94167},
+  {n:"Diego Almeida dos Santos",t:"Gerente",m:4,fat:110000,mj:18333},
+  {n:"Diego Lopes de Brito",t:"Gerente",m:86,fat:1810000,mj:301667},
+  {n:"Dielly Michels Cabral Wohlke",t:"Vendedor",m:5,fat:337000,mj:56167},
+  {n:"Diogo Guareschi",t:"Vendedor",m:4,fat:0,mj:0},
+  {n:"Djeverson Damian da Silva",t:"Gerente",m:4,fat:143000,mj:23833},
+  {n:"Douglas Marciano",t:"Vendedor",m:3,fat:40000,mj:6667},
+  {n:"Elias Laranjeira Friolim",t:"Gerente",m:44,fat:832000,mj:138667},
+  {n:"Evelyn Giovana Alves da Silva",t:"Vendedor",m:24,fat:268000,mj:44667},
+  {n:"Felipe Couto da Cunha",t:"Vendedor",m:4,fat:133000,mj:22167},
+  {n:"Fernando Rodrigues de Souza",t:"Vendedor",m:30,fat:609000,mj:101500},
+  {n:"Franciele Vitória Simão",t:"Vendedor",m:59,fat:98000,mj:16333},
+  {n:"Giovana Vitória Oliveira Brand",t:"Vendedor",m:23,fat:260000,mj:43333},
+  {n:"Gisele Cardozo de Assis",t:"Vendedor",m:4,fat:0,mj:0},
+  {n:"Jackson Gabriel Rodrigues Belchior",t:"Vendedor",m:12,fat:57000,mj:9500},
+  {n:"Jian Rafael de Lorena",t:"Vendedor",m:31,fat:381000,mj:63500},
+  {n:"João Vitor da Paixão",t:"Vendedor",m:16,fat:199000,mj:33167},
+  {n:"Julia Runze",t:"Gerente",m:0,fat:0,mj:0},
+  {n:"Juliana Sperandio",t:"Gerente",m:44,fat:924000,mj:154000},
+  {n:"Juliane Fortes",t:"Vendedor",m:0,fat:0,mj:0},
+  {n:"Kaiane Aparecida da Silva Coelho",t:"Vendedor",m:0,fat:0,mj:0},
+  {n:"Kallel Ajala Mota",t:"Vendedor",m:5,fat:526000,mj:87667},
+  {n:"Kleber de Oliveira",t:"Gerente",m:5,fat:436000,mj:72667},
+  {n:"Laryssa Novitzki Heiden",t:"Vendedor",m:8,fat:420000,mj:70000},
+  {n:"Maria Eduarda de Lima Tibes",t:"Vendedor",m:1,fat:25000,mj:4167},
+  {n:"Maria Helena Flores Teixeira",t:"Vendedor",m:63,fat:627000,mj:104500},
+  {n:"Matheus Anderson Leite Heiler",t:"Vendedor",m:17,fat:148000,mj:24667},
+  {n:"Matheus Henrique da Silva Quintana",t:"Vendedor",m:35,fat:346000,mj:57667},
+  {n:"Maxmillian Lopes da Costa",t:"Gerente",m:17,fat:2040000,mj:340000},
+  {n:"Mirian Vitória Sansão",t:"Vendedor",m:11,fat:106000,mj:17667},
+  {n:"Natanael Luiz dos Santos",t:"Vendedor",m:1,fat:30000,mj:5000},
+  {n:"Paula Pikcius",t:"Vendedor",m:63,fat:374000,mj:62333},
+  {n:"Pedro Henrique Coral Sacht",t:"Vendedor",m:3,fat:88000,mj:14667},
+  {n:"Pedro Henrique Guimarães Carius",t:"Vendedor",m:5,fat:77000,mj:12833},
+  {n:"Rafaela Marthendal Mafra",t:"Vendedor",m:15,fat:498000,mj:83000},
+  {n:"Raquel Geisiane Ribeiro Costa",t:"Vendedor",m:63,fat:290000,mj:48333},
+  {n:"Reginaldo Fernandes de Souza Junior",t:"Gerente",m:59,fat:225000,mj:37500},
+  {n:"Rodrigo Ramos",t:"Gerente",m:7,fat:423000,mj:70500},
+  {n:"Romário Nascimento do Rozário",t:"Vendedor",m:35,fat:265000,mj:44167},
+  {n:"Ronaldo Camargo",t:"Gerente",m:69,fat:1340000,mj:223333},
+  {n:"Ryan Medeiros Pierote",t:"Vendedor",m:4,fat:96000,mj:16000},
+  {n:"Silvia Paula Santana Meisen",t:"Vendedor",m:53,fat:76000,mj:12667},
+  {n:"Tainara Américo da Silva",t:"Vendedor",m:36,fat:270000,mj:45000},
+  {n:"Yasmin Ribeiro do Nascimento",t:"Vendedor",m:4,fat:68000,mj:11333},
+].sort((a,b)=>a.n.localeCompare(b.n,'pt'));
+
+// Médias mensais por faixa: fat_faixa / n_pessoas / 6  (valores oficiais)
+const MEDIA_V = {"0 a 3 meses":12250,"3 a 6 meses":25771,"6 a 12 meses":32389,"+12 meses":51150};
+const MEDIA_G = {"0 a 3 meses":3250,"3 a 6 meses":38278,"6 a 12 meses":70500,"+12 meses":164981};
+const FAT_V_FAIXA = {"0 a 3 meses":735000,"3 a 6 meses":1237000,"6 a 12 meses":583000,"+12 meses":6138000};
+const FAT_G_FAIXA = {"0 a 3 meses":39000,"3 a 6 meses":689000,"6 a 12 meses":423000,"+12 meses":8909000};
+
+function makeCluster(elId, tipo, unidade) {
+  const grid=document.getElementById(elId);
+  const mediaFaixa = tipo==='Vendedor' ? MEDIA_V : MEDIA_G;
+  const fatFaixa = tipo==='Vendedor' ? FAT_V_FAIXA : FAT_G_FAIXA;
+  grid.innerHTML='';
+  LABELS.forEach((f,fi)=>{
+    const membros=pessoas.filter(p=>p.t===tipo&&getFaixa(p.m)===f).sort((a,b)=>b.fat-a.fat);
+    const media = mediaFaixa[f] || 0;
+    const totalF = fatFaixa[f] || 0;
+    const note=membros.length>0&&membros.length<4?`<div class="cluster-note">Amostra pequena (${membros.length} ${unidade}).</div>`:'';
+    const names=membros.length
+      ?membros.map(p=>`<div class="cluster-person"><span class="cluster-person-name">${p.n}</span><span class="cluster-person-val">${fmtK(p.fat)}</span></div>`).join('')
+      :'<div class="cluster-note">Nenhum colaborador.</div>';
+    grid.innerHTML+=`<div class="cluster-card">
+      <div class="cluster-name" style="color:${COLORS[fi]}">${f}</div>
+      <div class="cluster-count">${membros.length} ${unidade} · ${fmtK(totalF)} total</div>
+      <div class="cluster-avg-label">Média mensal por pessoa</div>
+      <div class="cluster-avg-value">${fmtK(media)}</div>
+      <div class="cluster-names">${names}</div>${note}
+    </div>`;
+  });
+}
+makeCluster('clusterV','Vendedor','vendedores');
+makeCluster('clusterG','Gerente','gerentes');
+
+let cur='todos';
+function filter(f,btn){cur=f;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('search').value='';render();}
+function render(){
+  const s=document.getElementById('search').value.toLowerCase();
+  const tbody=document.getElementById('tbody');
+  tbody.innerHTML='';
+  let list=cur==='todos'?pessoas:pessoas.filter(p=>p.t===cur);
+  if(s)list=list.filter(p=>p.n.toLowerCase().includes(s));
+  list=[...list].sort((a,b)=>b.fat-a.fat);
+  document.getElementById('count').textContent=`Exibindo ${list.length} colaborador${list.length!==1?'es':''}`;
+  if(!list.length){tbody.innerHTML='<tr><td colspan="5" class="empty">Nenhum resultado.</td></tr>';return;}
+  list.forEach(p=>{
+    const f=getFaixa(p.m);const ci=faixaIdx[f];const bc=p.t==='Gerente'?'bg':'bv';
+    const fatStr=p.fat?`<span class="fat-val">${fmtK(p.fat)}</span>`:'<span class="fat-zero">—</span>';
+    const mjStr=p.mj?`<span class="fat-val">${fmtK(p.mj)}/mês</span>`:'<span class="fat-zero">R$0</span>';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0">${p.n}</td><td><span class="badge ${bc}">${p.t}</span></td><td><span class="dot" style="background:${COLORS[ci]}"></span>${f}</td><td>${fatStr}</td><td>${mjStr}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+render();
+</script>
+</body>
+</html>
