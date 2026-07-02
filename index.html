@@ -274,7 +274,7 @@ function makeCluster(elId, tipo, unidade) {
     const note=membros.length>0&&membros.length<4?`<div class="cluster-note">Amostra pequena (${membros.length} ${unidade}).</div>`:'';
     const names=membros.length
       ?membros.map(p=>`<div class="cluster-person"><span class="cluster-person-name">${p.n}</span><span class="cluster-person-val">${fmtK(p.fat)}</span></div>`).join('')
-      :'<div class="cluster-note">Nenhum colaborador.</div>';
+      :'<div class="cluster-note">Nenhuma pessoa.</div>';
     grid.innerHTML+=`<div class="cluster-card">
       <div class="cluster-name" style="color:${COLORS[fi]}">${f}</div>
       <div class="cluster-count">${membros.length} ${unidade} · ${fmtK(totalF)} total</div>
@@ -296,7 +296,7 @@ function render(){
   let list=cur==='todos'?pessoas:pessoas.filter(p=>p.t===cur);
   if(s)list=list.filter(p=>p.n.toLowerCase().includes(s));
   list=[...list].sort((a,b)=>b.fat-a.fat);
-  document.getElementById('count').textContent=`Exibindo ${list.length} colaborador${list.length!==1?'es':''}`;
+  document.getElementById('count').textContent=`Exibindo ${list.length} pessoas${list.length!==1?'es':''}`;
   if(!list.length){tbody.innerHTML='<tr><td colspan="5" class="empty">Nenhum resultado.</td></tr>';return;}
   list.forEach(p=>{
     const f=getFaixa(p.m);const ci=faixaIdx[f];const bc=p.t==='Gerente'?'bg':'bv';
