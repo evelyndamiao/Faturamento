@@ -41,7 +41,8 @@
   .cluster-name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
   .cluster-count { font-size: 11px; color: #aaa; margin-bottom: 8px; }
   .cluster-avg-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: .04em; }
-  .cluster-avg-value { font-size: 18px; font-weight: 600; color: #E30000; line-height: 1.2; margin-bottom: 8px; }
+  .cluster-avg-value { font-size: 22px; font-weight: 700; color: #E30000; line-height: 1.2; margin-bottom: 4px; }
+  .cluster-avg-sub { font-size: 10px; color: #aaa; margin-bottom: 8px; }
   .cluster-names { font-size: 11px; color: #6b6b6b; max-height: 160px; overflow-y: auto; }
   .cluster-names::-webkit-scrollbar { width: 4px; }
   .cluster-names::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
@@ -87,7 +88,7 @@
 </div>
 <div class="wrap">
   <div class="page-title">Faturamento — Equipe comercial</div>
-  <div class="page-sub">Ciclo jan–jun/2026 · 55 pessoas ativas</div>
+  <div class="page-sub">Ciclo jan–jun/2026 · 55 colaboradores ativos</div>
 
   <div class="kpi-row">
     <div class="kpi kpi-accent">
@@ -139,7 +140,7 @@
   <div class="section-label">Listagem individual</div>
   <div class="list-card">
     <div class="list-header">
-      <div class="list-title">Pessoas — ordenado por faturamento</div>
+      <div class="list-title">Colaboradores — ordenado por faturamento</div>
       <div class="filter-btns">
         <button class="fbtn active" onclick="filter('todos',this)">Todos (55)</button>
         <button class="fbtn" onclick="filter('Vendedor',this)">Vendedores (40)</button>
@@ -176,27 +177,52 @@ function fmtK(v){
 function getFaixa(m){if(m<=3)return"0 a 3 meses";if(m<=6)return"3 a 6 meses";if(m<=12)return"6 a 12 meses";return"+12 meses";}
 const faixaIdx={"0 a 3 meses":0,"3 a 6 meses":1,"6 a 12 meses":2,"+12 meses":3};
 
-function makePie(id, fat, legId) {
+function makePie(id, fat, legId, tipo) {
   const total=fat.reduce((a,b)=>a+b,0);
+  // Contar pessoas por faixa para esse tipo
+  const counts = LABELS.map(f => pessoas.filter(p=>p.t===tipo&&getFaixa(p.m)===f).length);
+
   new Chart(document.getElementById(id),{
     type:'doughnut',
     data:{labels:LABELS,datasets:[{data:fat,backgroundColor:COLORS,borderColor:'#fff',borderWidth:3,hoverOffset:5}]},
-    options:{responsive:true,maintainAspectRatio:false,layout:{padding:16},cutout:'45%',
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:20},cutout:'42%',
       plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>` ${fmtK(c.parsed)} (${((c.parsed/total)*100).toFixed(1)}%)`}},
-        datalabels:{color:'#fff',font:{size:12,weight:'700'},clamp:true,formatter:(v)=>{const p=(v/total)*100;return p<5?'':p.toFixed(0)+'%';}}
+        tooltip:{callbacks:{label:c=>{
+          const i=c.dataIndex;
+          const p=((c.parsed/total)*100).toFixed(1);
+          return [` ${fmtK(c.parsed)} (${p}%)`,` ${counts[i]} colaboradores`];
+        }}},
+        datalabels:{
+          color:'#fff',
+          clamp:true,
+          font:(ctx)=>{
+            const p=(ctx.dataset.data[ctx.dataIndex]/total)*100;
+            return {size: p<10?11:13, weight:'700'};
+          },
+          formatter:(v,ctx)=>{
+            const p=(v/total)*100;
+            if(p<4) return '';
+            const i=ctx.dataIndex;
+            if(p<12) return `${p.toFixed(0)}%`;
+            return [`${p.toFixed(0)}%`, `${counts[i]} pess.`];
+          },
+          textAlign:'center',
+          padding:4
+        }
       }
     },plugins:[ChartDataLabels]
   });
   const el=document.getElementById(legId);
   LABELS.forEach((l,i)=>{
     const p=((fat[i]/total)*100).toFixed(1);
-    el.innerHTML+=`<div class="leg-item"><span class="leg-sq" style="background:${COLORS[i]}"></span><span>${l}</span><span class="leg-detail">${fmtK(fat[i])} · ${p}%</span></div>`;
+    el.innerHTML+=`<div class="leg-item">
+      <span class="leg-sq" style="background:${COLORS[i]}"></span>
+      <span>${l}</span>
+      <span class="leg-detail">${counts[i]} pessoas · ${fmtK(fat[i])} · ${p}%</span>
+    </div>`;
   });
 }
 
-makePie('cvF',FAT_V,'legVF');
-makePie('cgF',FAT_G,'legGF');
 
 const pessoas = [
   {n:"Alisson Cezar Silva Barroso",t:"Vendedor",m:22,fat:143000,mj:23833},
@@ -256,6 +282,9 @@ const pessoas = [
   {n:"Yasmin Ribeiro do Nascimento",t:"Vendedor",m:4,fat:68000,mj:11333},
 ].sort((a,b)=>a.n.localeCompare(b.n,'pt'));
 
+makePie('cvF',FAT_V,'legVF','Vendedor');
+makePie('cgF',FAT_G,'legGF','Gerente');
+
 // Médias mensais por faixa: fat_faixa / n_pessoas / 6  (valores oficiais)
 const MEDIA_V = {"0 a 3 meses":12250,"3 a 6 meses":25771,"6 a 12 meses":32389,"+12 meses":51150};
 const MEDIA_G = {"0 a 3 meses":3250,"3 a 6 meses":38278,"6 a 12 meses":70500,"+12 meses":164981};
@@ -274,12 +303,13 @@ function makeCluster(elId, tipo, unidade) {
     const note=membros.length>0&&membros.length<4?`<div class="cluster-note">Amostra pequena (${membros.length} ${unidade}).</div>`:'';
     const names=membros.length
       ?membros.map(p=>`<div class="cluster-person"><span class="cluster-person-name">${p.n}</span><span class="cluster-person-val">${fmtK(p.fat)}</span></div>`).join('')
-      :'<div class="cluster-note">Nenhuma pessoa.</div>';
+      :'<div class="cluster-note">Nenhum colaborador.</div>';
     grid.innerHTML+=`<div class="cluster-card">
       <div class="cluster-name" style="color:${COLORS[fi]}">${f}</div>
       <div class="cluster-count">${membros.length} ${unidade} · ${fmtK(totalF)} total</div>
       <div class="cluster-avg-label">Média mensal por pessoa</div>
       <div class="cluster-avg-value">${fmtK(media)}</div>
+      <div class="cluster-avg-sub">${fmtK(totalF)} ÷ ${membros.length} pess. ÷ 6 meses</div>
       <div class="cluster-names">${names}</div>${note}
     </div>`;
   });
@@ -296,7 +326,7 @@ function render(){
   let list=cur==='todos'?pessoas:pessoas.filter(p=>p.t===cur);
   if(s)list=list.filter(p=>p.n.toLowerCase().includes(s));
   list=[...list].sort((a,b)=>b.fat-a.fat);
-  document.getElementById('count').textContent=`Exibindo ${list.length} pessoas`;
+  document.getElementById('count').textContent=`Exibindo ${list.length} colaborador${list.length!==1?'es':''}`;
   if(!list.length){tbody.innerHTML='<tr><td colspan="5" class="empty">Nenhum resultado.</td></tr>';return;}
   list.forEach(p=>{
     const f=getFaixa(p.m);const ci=faixaIdx[f];const bc=p.t==='Gerente'?'bg':'bv';
